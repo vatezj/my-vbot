@@ -38,35 +38,43 @@ class MessageHandler
 
         TextType::messageHandler($message, $friends, $groups);
         RecallType::messageHandler($message);
-        $json = json_encode($message);
         if ($message['type'] === 'new_friend') {
-//            Text::send($message['from']['UserName'], '客官，等你很久了！感谢跟 vbot 交朋友，如果可以帮我点个star，谢谢了！https://github.com/HanSon/vbot');
-//            $groups->addMember($groups->getUsernameByNickname('Vbot 体验群'), $message['from']['UserName']);
-            Text::send($message['from']['UserName'], '客官，等你很久了！感谢跟我交朋友，现在传您一套武功秘籍http://sina.lt/gaAn');
-        }
-//        Text::send($message['from']['UserName'],$json);
-        if ($message['type'] === 'emoticon' && random_int(0, 1)) {
+            $friends->approve($message);
             Text::send($message['from']['UserName'], '客官，等你很久了！感谢跟我交朋友，现在传您一套武功秘籍http://sina.lt/gaAn');
             Emoticon::sendRandom($message['from']['UserName']);
         }
 
         // @todo
-        if ($message['type'] === 'official') {
-            vbot('console')->log('收到公众号消息:'.$message['title'].$message['description'].
-                $message['app'].$message['url']);
-        }
-        if ($message['type'] === 'text') {
+
+        if($message['fromType'] ===  'Friend' && $message['type'] === 'text'){
             $datas['password'] = $message['content'];
             $data = explode("￥", $message['content']);
             if (isset($data[1])) {
                 Text::send($message['from']['UserName'], '正在查询中......');
             }
-
             $result = self::deelText( $message['content'],$message['username']);
-
-
             Text::send($message['from']['UserName'], $result);
         }
+
+        if($message['fromType'] ===  'official' && $message['type'] === 'text'){
+
+        }
+
+        if($message['fromType'] ===  'Group' && $message['type'] === 'text'){
+            $datas['password'] = $message['content'];
+            $data = explode("￥", $message['content']);
+            if (isset($data[1])) {
+                Text::send($message['from']['UserName'], '正在查询中......');
+                $result = self::deelText( $message['content'],$message['username']);
+                Text::send($message['from']['UserName'], $result);
+            }
+            if($message['content'] === "帮助")
+            {
+                $result = self::deelText( "帮助",$message['username']);
+                Text::send($message['from']['UserName'], $result);
+            }
+        }
+
 
         if ($message['type'] === 'request_friend') {
             vbot('console')->log('收到好友申请:'.$message['info']['Content'].$message['avatar']);
@@ -74,8 +82,17 @@ class MessageHandler
                 $friends->approve($message);
             }
         }
-        if ($message['type'] === 'group_change') {
+        if ($message['type'] === 'group_change' && $message['action'] === "ADD") {
+
             Text::send($message['from']['UserName'], '欢迎新人 '.$message['invited'].PHP_EOL.'邀请人：'.$message['inviter']);
+            $result = "@{$message['invited']}".PHP_EOL."点击进入首页  http://www.taoquan.ink \n" .
+                "点击进入淘口令  http://www.taoquan.ink/pages/password/password \n" .
+                "点击进入分类   http://www.taoquan.ink/pages/category/wkiwi-classify \n" .
+                "点击进入搜索  http://www.taoquan.ink/pages/search/search \n" .
+                "点击进入9.9包邮   http://www.taoquan.ink/pages/lists/lists_nine \n" .
+                "点击进入说明  https://mp.weixin.qq.com/s/J4ZOMnoaRSA5Y1baWuU-Ng \n" .
+                "点击进入达人说   http://www.taoquan.ink/pages/talent/talent \n";
+            Text::send($message['from']['UserName'], $result);
         }
 
         if ($message['type'] === 'request_friend') {
@@ -90,22 +107,40 @@ class MessageHandler
     {
         switch ($content) {
             case '首页':
-                $text = "<a href='http://www.taoquan.ink'>点击进入{$content}</a>";
+                $text = "{$content}:\n
+                        点击进入  http://www.taoquan.ink";
                 break;
             case '淘口令':
-                $text = "<a href='http://www.taoquan.ink/pages/password/password'>点击进入{$content}</a>";
+                $text = "{$content}:\n
+                        点击进入  http://www.taoquan.ink/pages/password/password";
                 break;
             case '分类':
-                $text = "<a href='http://www.taoquan.ink/pages/category/wkiwi-classify'>点击进入{$content}</a>";
+                $text = "{$content}:\n
+                        点击进入  http://www.taoquan.ink/pages/category/wkiwi-classify";
+
                 break;
             case '搜索':
-                $text = "<a href='http://www.taoquan.ink/pages/search/search'>点击进入{$content}</a>";
+                $text = "{$content}:\n
+                        点击进入 http://www.taoquan.ink/pages/search/search";
+
                 break;
             case '9.9包邮':
-                $text = "<a href='http://www.taoquan.ink/pages/lists/lists_nine'>点击进入{$content}</a>";
+                $text = "{$content}:\n
+                        点击进入 http://www.taoquan.ink/pages/lists/lists_nine";
                 break;
             case '达人说':
-                $text = "<a href='http://www.taoquan.ink/pages/talent/talent'>点击进入{$content}</a>";
+                $text = "{$content}:\n
+                        点击进入  http://www.taoquan.ink/pages/talent/talent";
+
+                break;
+            case '帮助':
+                $text = "点击进入首页  http://www.taoquan.ink \n" .
+                        "点击进入淘口令  http://www.taoquan.ink/pages/password/password \n" .
+                        "点击进入分类   http://www.taoquan.ink/pages/category/wkiwi-classify \n" .
+                        "点击进入搜索  http://www.taoquan.ink/pages/search/search \n" .
+                        "点击进入9.9包邮   http://www.taoquan.ink/pages/lists/lists_nine \n" .
+                        "点击进入说明  https://mp.weixin.qq.com/s/J4ZOMnoaRSA5Y1baWuU-Ng \n" .
+                        "点击进入达人说   http://www.taoquan.ink/pages/talent/talent \n";
                 break;
             default:
                 $data = explode("￥", $content);
@@ -113,12 +148,13 @@ class MessageHandler
                     $datas['password'] = $content;
                     $text =  self::http_post('http://api.taoquan.ink/api/product/change_password', $datas);;
                 } else {
-                    $text = "首页: \n" . "<a href='http://www.taoquan.ink'>点击进入首页</a>\n" .
-                        "淘口令: \n" . "<a href='http://www.taoquan.ink/pages/password/password'>点击进入淘口令</a>\n" .
-                        "分类: \n" . "<a href='http://www.taoquan.ink/pages/category/wkiwi-classify'>点击进入分类</a>\n" .
-                        "搜索: \n" . "<a href='http://www.taoquan.ink/pages/search/search'>点击进入搜索</a>\n" .
-                        "9.9包邮: \n" . "<a href='http://www.taoquan.ink/pages/lists/lists_nine'>点击进入9.9包邮</a>\n" .
-                        "达人说: \n" . "<a href='http://www.taoquan.ink/pages/talent/talent'>点击进入达人说</a>\n";
+                    $text = "点击进入首页  http://www.taoquan.ink \n" .
+                            "点击进入淘口令  http://www.taoquan.ink/pages/password/password \n" .
+                            "点击进入分类   http://www.taoquan.ink/pages/category/wkiwi-classify \n" .
+                            "点击进入搜索  http://www.taoquan.ink/pages/search/search \n" .
+                            "点击进入9.9包邮   http://www.taoquan.ink/pages/lists/lists_nine \n" .
+                            "点击进入说明  https://mp.weixin.qq.com/s/J4ZOMnoaRSA5Y1baWuU-Ng \n" .
+                            "点击进入达人说   http://www.taoquan.ink/pages/talent/talent \n";
                 }
                 break;
         }
