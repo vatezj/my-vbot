@@ -28,6 +28,7 @@ class Reply
     public function send()
     {
         $type=$this->message['type'];
+//        vbot('console')->log(json_encode($this->message));
         switch ($type) {
             case 'text':
                 //@我或者好友发消息都自动回复
@@ -93,6 +94,9 @@ class Reply
 
     private function reboot($message){
         $tuling =new Taoke($this->options);
+        if(isset($message['isAt']) && $message['isAt'] == true){
+            $message['content'] = $message['pure'];
+        }
         $return =$tuling->reboot($message['content']);
         Text::send($message['from']['UserName'], $return);
         $back = $return;
