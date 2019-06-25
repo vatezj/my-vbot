@@ -31,25 +31,24 @@ class Reply
         switch ($type) {
             case 'text':
                 //@我或者好友发消息都自动回复
-                if ($this->message['fromType'] == 'Friend' || $this->message['fromType'] ===  'Group' || true == $this->message['isAt']) {
-                    $data = explode("￥", $this->message['content']);
-                    if (isset($data[1])) {
-                        $this->findPassword($this->message);
-                    }else
-                    {
-                        if($this->message['fromType'] ===  'Group' && true == $this->message['isAt']){
-                            $this->reboot($this->message);
-                        }
-                        if($this->message['fromType'] == 'Friend'){
-                            $this->reboot($this->message);
-                        }
+                if( $this->message['content'] == '帮助' || $this->message['content'] == '说明'){
+                    Text::send($this->message['from']['UserName'], '我可以查天气，手机归属地，qq状态{@qq+QQ号}，算卦{发送观音灵签、月老灵签、财神爷灵签}，以及讲笑话'.PHP_EOL.'最重要的，我可以帮助您找淘宝内部优惠券{点击链接看教程 https://mp.weixin.qq.com/s/J4ZOMnoaRSA5Y1baWuU-Ng}');
+                }else {
+                    if ($this->message['fromType'] == 'Friend' || $this->message['fromType'] === 'Group' || true == $this->message['isAt']) {
+                        $data = explode("￥", $this->message['content']);
+                        if (isset($data[1])) {
+                            $this->findPassword($this->message);
+                        } else {
+                            if ($this->message['fromType'] === 'Group' && true == $this->message['isAt']) {
+                                $this->reboot($this->message);
+                            }
+                            if ($this->message['fromType'] == 'Friend') {
+                                $this->reboot($this->message);
+                            }
 
+                        }
                     }
-                }else{
-
                 }
-
-
                 break;
             case 'voice':
                 // code...
@@ -65,12 +64,15 @@ class Reply
                 break;
             case 'new_friend':
                 echo '新增好友' . $this->message['from']['UserName'] . '请求' . PHP_EOL;
-                Text::send($this->message['from']['UserName'], '客官，等你很久了！感谢跟 oop 交朋友，我是 kcloze 的贴身秘书，当你累了困惑了，可以随时呼叫我！' . PHP_EOL . '高山流水遇知音，知音不在谁堪听？焦尾声断斜阳里，寻遍人间已无');
+                Text::send($this->message['from']['UserName'], '客官，等你很久了！我是您的的贴身秘书，当你累了困惑了，可以随时呼叫我！' . PHP_EOL .
+                            '我可以查天气，手机归属地，qq状态{@qq+QQ号}，算卦{发送观音灵签、月老灵签、财神爷灵签}，以及讲笑话'.PHP_EOL.'最重要的，我可以帮助您找淘宝内部优惠券{点击链接看教程 https://mp.weixin.qq.com/s/J4ZOMnoaRSA5Y1baWuU-Ng}');
                 break;
             case 'request_friend':
                 echo '新增好友' . $this->message['from']['UserName'] . '请求，自动通过' . PHP_EOL;
                 $friends = vbot('friends');
                 $friends->approve($this->message);
+                Text::send($this->message['from']['UserName'], '客官，等你很久了！我是您的的贴身秘书，当你累了困惑了，可以随时呼叫我！' . PHP_EOL .
+                    '我可以查天气，手机归属地，qq状态{@qq+QQ号}，算卦{发送观音灵签、月老灵签、财神爷灵签}，以及讲笑话'.PHP_EOL.'最重要的，我可以帮助您找淘宝内部优惠券{点击链接看教程 https://mp.weixin.qq.com/s/J4ZOMnoaRSA5Y1baWuU-Ng}');
                 break;
             case 'group_change':
                 Text::send($this->message['from']['UserName'], '欢迎新人 ' . $this->message['invited'] . PHP_EOL . '邀请人：' . $this->message['inviter']);

@@ -24,6 +24,9 @@ class Robots
     public function run()
     {
         $this->robot = new Vbot($this->options);
+//        $this->robot->qrCodeObserver->setBeforeMessageObserver(function ($qrCodeUrl) {
+//            echo $qrCodeUrl;
+//        });
         $this->robot->messageHandler->setHandler(function ($message) {
             $reply=new Reply($message, $this->options);
             $reply->send();
