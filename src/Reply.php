@@ -31,7 +31,7 @@ class Reply
         switch ($type) {
             case 'text':
                 //@我或者好友发消息都自动回复
-                if ($this->message['fromType'] == 'Friend' || $this->message['fromType'] ===  'Group' && true == $this->message['isAt']) {
+                if ($this->message['fromType'] == 'Friend' || $this->message['fromType'] ===  'Group' || true == $this->message['isAt']) {
                     $data = explode("￥", $this->message['content']);
                     if (isset($data[1])) {
                         $this->findPassword($this->message);
