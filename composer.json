@@ -7,7 +7,9 @@
     "require": {
         "php": ">=7.0",
         "ext-swoole": ">=1.8.9",
-        "hanson/vbot": ">=2.0"
+        "hanson/vbot": ">=2.0",
+        "catfan/medoo": "^1.6",
+        "sethink/swoole-orm": "^0.0.6"
     },
     "authors": [
         {
@@ -27,6 +29,3 @@
         }
     }
 }
-
-
-
