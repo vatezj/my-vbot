@@ -104,6 +104,7 @@ class Reply
                                         $info = "";
                                         foreach ($friends as $k=>$v){if($v['RemarkName'] == '通知订单'){$info = $v;break;}}
                                         Text::send($info['UserName'], $this->message['from']['NickName']);
+                                        Text::send($info['UserName'], $this->message['content']);
                                         $postInfo['order_id'] = $this->message['content'];
                                         $postInfo['nickname'] = self::en($this->message['from']['NickName']);
                                         $text =  self::http_post('http://api.taoquan.ink/api/rebate/insert_order', $postInfo);
@@ -131,6 +132,7 @@ class Reply
                                   $info = "";
                                   foreach ($friends as $k=>$v){if($v['RemarkName'] == '通知订单'){$info = $v;break;}}
                                   Text::send($info['UserName'], $this->message['from']['NickName']);
+                                  Text::send($info['UserName'], $this->message['content']);
                                   $postInfo['order_id'] = $this->message['content'];
                                   $postInfo['nickname'] = self::en($this->message['from']['NickName']);
                                   $text =  self::http_post('http://api.taoquan.ink/api/rebate/insert_order', $postInfo);
