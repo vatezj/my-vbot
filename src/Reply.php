@@ -19,6 +19,10 @@ class Reply
     private $message;
     private $options;
 
+    protected static $left = '[emoji:';
+    protected static $right = ']';
+    protected static $pattern = '/\[emoji\:(.*?)\]/is';
+
     public function __construct($message, $options)
     {
         $this->message = $message;
@@ -63,13 +67,16 @@ class Reply
     {
         $type = $this->message['type'];
 //        vbot('console')->log(json_encode($this->message));
-//        $friends = vbot('friends');
+        $friends = vbot('friends');
+
 //        vbot('console')->log(json_encode($friends));
+
         switch ($type) {
             case 'text':
                 //@我或者好友发消息都自动回复
                 if ($this->message['content'] == '帮助' || $this->message['content'] == '说明') {
                     Text::send($this->message['from']['UserName'], '我可以查天气，手机归属地，qq状态{@qq+QQ号}，算卦{发送观音灵签、月老灵签、财神爷灵签}，以及讲笑话' . PHP_EOL . '最重要的，我可以帮助您找淘宝内部优惠券{点击链接看教程 https://mp.weixin.qq.com/s/J4ZOMnoaRSA5Y1baWuU-Ng}');
+
                 } else {
                     if ($this->message['fromType'] == 'Friend' || $this->message['fromType'] === 'Group' || true == $this->message['isAt']) {
                         $ext = $this->delTexts($this->message['content']);
@@ -79,20 +86,60 @@ class Reply
                             if (isset($data[1])) {
                                 $this->findPassword($this->message);
                             } else {
+                                $pattern = '/^\d{18}$/';
+                                $text = $this->get('text');
+                                if (!preg_match($pattern,  $text, $matches)) {
+                                    if ($this->message['fromType'] === 'Group' && true == $this->message['isAt']) {
+                                        $this->reboot($this->message);
+                                    }
+                                    if ($this->message['fromType'] == 'Friend') {
+                                        $this->reboot($this->message);
+                                    }
+                                }else{
+                                    if($this->message['from']['RemarkName'] == "通知订单"){
+                                        $postInfo['order_id'] = $this->message['content'];
+                                        $text =  self::http_post('http://api.taoquan.ink/api/rebate/updata_order', $postInfo);
+                                        Text::send($this->message['from']['UserName'], $text);
+                                    }else{
+                                        $info = "";
+                                        foreach ($friends as $k=>$v){if($v['RemarkName'] == '通知订单'){$info = $v;break;}}
+                                        Text::send($info['UserName'], $this->message['from']['NickName']);
+                                        $postInfo['order_id'] = $this->message['content'];
+                                        $postInfo['nickname'] = self::en($this->message['from']['NickName']);
+                                        $text =  self::http_post('http://api.taoquan.ink/api/rebate/insert_order', $postInfo);
+                                        $text = json_decode($text,true);
+                                        Text::send($this->message['from']['UserName'], $text['data']);
+                                    }
+                                }
+                            }
+                        } else {
+                            $pattern = '/^\d{18}$/';
+                            if (!preg_match($pattern,  $this->message['content'], $matches)) {
                                 if ($this->message['fromType'] === 'Group' && true == $this->message['isAt']) {
                                     $this->reboot($this->message);
                                 }
                                 if ($this->message['fromType'] == 'Friend') {
                                     $this->reboot($this->message);
                                 }
+                            }else
+                            {
+                              if($this->message['from']['RemarkName'] == "通知订单"){
+                                  $postInfo['order_id'] = $this->message['content'];
+                                  $text =  self::http_post('http://api.taoquan.ink/api/rebate/updata_order', $postInfo);
+                                  Text::send($this->message['from']['UserName'], $text);
+                              }else{
+                                  $info = "";
+                                  foreach ($friends as $k=>$v){if($v['RemarkName'] == '通知订单'){$info = $v;break;}}
+                                  Text::send($info['UserName'], $this->message['from']['NickName']);
+                                  $postInfo['order_id'] = $this->message['content'];
+                                  $postInfo['nickname'] = self::en($this->message['from']['NickName']);
+                                  $text =  self::http_post('http://api.taoquan.ink/api/rebate/insert_order', $postInfo);
+                                  $text = json_decode($text,true);
+                                  Text::send($this->message['from']['UserName'], $text['data']);
+                              }
+
                             }
-                        } else {
-                            if ($this->message['fromType'] === 'Group' && true == $this->message['isAt']) {
-                                $this->reboot($this->message);
-                            }
-                            if ($this->message['fromType'] == 'Friend') {
-                                $this->reboot($this->message);
-                            }
+
                         }
 
                         //₳  ₴  $ ¢  €
@@ -131,6 +178,37 @@ class Reply
                 // code...
                 break;
 
+        }
+    }
+
+    public static function http_post($url,$param,$post_file = false)
+    {
+        $oCurl = curl_init();
+        if (stripos($url, "https://") !== FALSE) {
+            curl_setopt($oCurl, CURLOPT_SSL_VERIFYPEER, FALSE);
+            curl_setopt($oCurl, CURLOPT_SSL_VERIFYHOST, false);
+            curl_setopt($oCurl, CURLOPT_SSLVERSION, 1); //CURL_SSLVERSION_TLSv1
+        }
+        if (is_string($param) || $post_file) {
+            $strPOST = $param;
+        } else {
+            $aPOST = array();
+            foreach ($param as $key => $val) {
+                $aPOST[] = $key . "=" . urlencode($val);
+            }
+            $strPOST = join("&", $aPOST);
+        }
+        curl_setopt($oCurl, CURLOPT_URL, $url);
+        curl_setopt($oCurl, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($oCurl, CURLOPT_POST, true);
+        curl_setopt($oCurl, CURLOPT_POSTFIELDS, $strPOST);
+        $sContent = curl_exec($oCurl);
+        $aStatus = curl_getinfo($oCurl);
+        curl_close($oCurl);
+        if (intval($aStatus["http_code"]) == 200) {
+            return $sContent;
+        } else {
+            return false;
         }
     }
 
@@ -244,6 +322,56 @@ class Reply
             $str = $arr['title'] . PHP_EOL . $arr['content'];
         }
         return $str;
+    }
+
+
+
+
+    /**
+     * 将字符串格式化为emoji代码
+     *
+     * @param string|array $data 需要被格式化的数据
+     * @return string|array 格式化后的数据
+     */
+    public static function en($data)
+    {
+        if (is_array($data)) {
+            foreach ($data as $key => $value) {
+                $data[$key] = static::en($value);
+            }
+        } elseif (is_string($data)) {
+            $left = static::$left;
+            $right = static::$right;
+            $data = preg_replace_callback('/[\xf0-\xf7].{3}/', function ($data) use ($left, $right) {
+                $data = array_pop($data);
+                $data = base64_encode($data);
+                $data = sprintf('%s%s%s', $left, $data, $right);
+                return $data;
+            }, $data);
+        }
+        return $data;
+    }
+
+    /**
+     * 反格式化数据
+     *
+     * @param string|array $data 需要被反格式化的数据
+     * @return string|array 反格式化后为emoji原型字符串
+     */
+    public static function de($data)
+    {
+        if (is_array($data)) {
+            foreach ($data as $key => $value) {
+                $data[$key] = static::de($value);
+            }
+        } elseif (is_string($data)) {
+            $data = preg_replace_callback(static::$pattern, function ($data) {
+                $data = $data[1];
+                $data = base64_decode($data);
+                return $data;
+            }, $data);
+        }
+        return $data;
     }
 
 
